@@ -1,0 +1,166 @@
+article {
+    overflow: auto;
+}
+
+aside {
+    overflow: auto;    
+}
+
+html,body {
+    font-family: Verdana, Geneva, sans-serif;
+    height: 100vh;
+    margin: 0;
+    position: fixed;
+    padding-bottom: 100px;
+}
+
+button {
+    border-radius: 5px;
+    padding:5px;
+}
+
+img {
+    width: 100%;
+}
+
+input[type='text'] {
+    border-radius: 5px;
+    padding: 5px;
+    width: 80%;
+}
+
+.clearfix:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.container {
+    margin: 0 5px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card {
+    margin: 5px;
+}
+
+.card__header {
+    padding: 8px;
+}
+
+.table {
+    display: table;
+    width: 100%;
+}
+
+.table__cell {
+    display: table-cell;
+    position: relative;
+    padding: 5px;
+    
+}
+
+.table__cell--poster {
+    width: 30%;
+}
+
+.table__cell--backdrop {
+    width: 70%;
+    vertical-align: middle;
+    height: 100%;
+}
+
+.row__poster{
+    float: left;
+    width: 30%;
+    padding: 0;
+    margin: 0;
+}
+
+.row__backdrop {
+    float: left;
+    width: 70%;
+    padding: 0;
+    margin: 0;
+}
+
+.header {
+    min-height: 50px;
+    padding: 10px;
+    background-color: #2a2a2b;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+
+.row {
+    position: relative;
+}
+
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+    overflow: auto;
+}
+.row__col-med {
+    float: left;
+    width: 70%;
+    background-color: yellow;
+    padding: 0;
+    margin: 0;
+}
+
+.row__col-small {
+    margin: 0;
+    padding: 0;
+    float: left;
+    width: 30%;
+    background-color: green
+}
+.mid-container {
+    flex: 1;
+    display: flex;
+}
+
+.movie-list {
+    list-style: none;
+    padding: 5px;
+}
+
+.movie-list__item {
+    overflow: hidden;
+}
+
+.img-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+    height: 100%;
+}
+
+/* Let's get this party started */
+::-webkit-scrollbar {
+    width: 5px;
+}
+ 
+/* Track */
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3); 
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+    -webkit-border-radius: 10px;
+    border-radius: 10px;
+    background: rgb(189, 191, 193,0.3); 
+    -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5); 
+}
+::-webkit-scrollbar-thumb:window-inactive {
+	background: rgb(189, 191, 193,0.3); 
+}

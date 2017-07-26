@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  </head>
+  <body>
+    <div class="container" id="app">
+      <header class="header">
+        <input class="header__input" type="text" placeholder="find movies" v-model="input">
+        <button class="header__button" @click="find(input)">find</button>
+      </header>
+      <div class="mid-container row">
+        <article class="row__col-med">
+          <div class="card">
+            <div class="card__header">
+              <h1>{{movieData.title}}</h1>
+              <span>{{getMovieGenres(movieData)}}</span>
+            </div>
+            <div class="card__body">
+              <div class="table">
+                <div class="table__cell table__cell--poster">
+                  <div class="img-wrapper">
+                    <img :src="getPoster(movieData)" alt="">
+                  </div>
+                </div>
+                <div class="table__cell table__cell--backdrop">
+                  <div class="img-wrapper">
+                    <img :src="getBackdrop(movieData)" alt="">
+                  </div>
+                </div>
+              </div>
+              <p>{{movieData.overview||''}}</p>
+              <span>Director: {{getDirectors(movieData)}}</span><br>
+              <span>Cast: {{getCast(movieData)}}</span>
+            </div>
+          </div>
+        </article>
+        <aside class="row__col-small">
+          <div class="list-container">
+            <ul class="movie-list">
+              <li class="movie-list__item" v-for="(movie, index) in movies" @click="fetchData(movie, index)">{{movie.title}}</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
