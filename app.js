@@ -21,7 +21,7 @@ let app = new Vue({
   el: '#app',
   data: {
     movies: [],
-    movieData:{},
+    movieData:{cast:['ada','asdsa']},
     input:''
   },
   methods: {
@@ -75,6 +75,7 @@ let app = new Vue({
     getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
       return value.name;
     }).join(', '):'',
+    getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path
   },
   created: function () {
     // `this` points to the vm instance

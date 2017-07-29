@@ -38,6 +38,31 @@
               <span>Cast: {{getCast(movieData)}}</span>
             </div>
           </div>
+          <!--- CAST start-->
+          <div class="card" v-if="movieData.cast">
+            <div class="card__header">
+              <h2>Cast</h2>
+            </div>
+            <div class="card__body">
+              <div class="list-container">
+                <ul class="cast-list">
+                  <li class="cast-list__item" v-for="(cast, index) in movieData.cast">
+
+                    <div class="flex-h">
+                      <div class="image-wrapper flex-h__item flex-h__item--poster">
+                        <img :src="getProfPic(cast)" alt="artist name">
+                      </div>
+                      <div class="flex-h__item flex-h__item--character"> &nbsp;
+                        {{cast.name||''}} -- {{cast.character||''}}
+                      </div>
+                    </div>
+
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!--- CAST end-->
         </article>
         <aside class="row__col-small">
           <div class="list-container">
