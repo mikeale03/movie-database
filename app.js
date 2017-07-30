@@ -1,3 +1,5 @@
+const {remote,ipcRenderer} = require('electron')
+const {Menu, MenuItem} = remote
 const fs = require('fs');
 var Datastore = require('nedb');
 let db = new Datastore({ filename: `${__dirname}/myDb` });
@@ -65,17 +67,30 @@ let app = new Vue({
     },
 
     getPoster: (movie) => movie.poster_path ? imageApiUrl+'w500'+movie.poster_path:'',
+
     getBackdrop: (movie) => movie.backdrop_path ? imageApiUrl+'w500'+movie.backdrop_path:'',
+
     getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
         return value.name;
     }).join(', '):'',
+
     getDirectors: (movie) => movie.directors ? movie.directors.map(function(value) {
         return value.name;
     }).join(','):'',
+
     getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
       return value.name;
     }).join(', '):'',
-    getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path
+
+    getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path,
+
+    showContextMenu: (movie,e) => {
+      menu.append(new MenuItem({label: 'Edit', click() { 
+        ipcRenderer.send('showEditMovie',movie);
+      }}))
+      e.preventDefault();
+      menu.popup(remote.getCurrentWindow());
+    }
   },
   created: function () {
     // `this` points to the vm instance
@@ -131,15 +146,14 @@ function getDirectors(crew) {
 }
 
 
-const {remote} = require('electron')
-const {Menu, MenuItem} = remote
+
 
 const menu = new Menu()
-menu.append(new MenuItem({label: 'MenuItem1', click() { console.log('item 1 clicked') }}))
+
 menu.append(new MenuItem({type: 'separator'}))
 menu.append(new MenuItem({label: 'MenuItem2', type: 'checkbox', checked: true}))
 
-window.addEventListener('contextmenu', (e) => {
+/*window.addEventListener('contextmenu', (e) => {
   e.preventDefault()
   menu.popup(remote.getCurrentWindow())
-}, false)
+}, false)*/

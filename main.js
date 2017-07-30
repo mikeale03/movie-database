@@ -1,4 +1,4 @@
-const {app, BrowserWindow, Menu, MenuItem} = require('electron')
+const {app, BrowserWindow, Menu, MenuItem, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs');
@@ -6,6 +6,7 @@ const fs = require('fs');
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
+let editWin
 
 function createWindow () {
   // Create the browser window.
@@ -27,6 +28,14 @@ function createWindow () {
     // when you should delete the corresponding element.
     win = null
   })
+
+  editWin = new BrowserWindow({width: 800, height: 600,show: false, parent: win})
+  // and load the index.html of the app.
+  editWin.loadURL(url.format({
+    pathname: path.join(__dirname, 'edit_movie.html'),
+    protocol: 'file:',
+    slashes: true
+  }))
 }
 
 // This method will be called when Electron has finished
@@ -211,4 +220,10 @@ const template = [
 ]
 
 const menu = Menu.buildFromTemplate(template)
-Menu.setApplicationMenu(menu)
+//Menu.setApplicationMenu(menu)
+
+//exports.editData = function()
+ipcMain.on('showEditMovie', function(event,movie) {
+  editWin.show();
+  editWin.webContents.send('movieData',movie);
+});

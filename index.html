@@ -67,7 +67,9 @@
         <aside class="row__col-small">
           <div class="list-container">
             <ul class="movie-list">
-              <li class="movie-list__item" v-for="(movie, index) in movies" @click="fetchData(movie, index)">{{movie.title}}</li>
+              <li class="movie-list__item" v-for="(movie, index) in movies" @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,$event)">
+                {{movie.title}}
+              </li>
             </ul>
           </div>
         </aside>

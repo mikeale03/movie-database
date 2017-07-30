@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/vue"></script>
+    <title>Edit Data</title>
+</head>
+<body>
+    <div class="container" id="app">
+      <article>
+        <div class="card">
+            <div class="card__header">
+              <input type="text" placeholder="Enter Title" v-model="movieData.title">
+              <input type="text" placeholder="Enter Title" :value="getMovieGenres(movieData)">
+            </div>
+            <div class="card__body">
+              <div class="table">
+                <div class="table__cell table__cell--poster">
+                  <div class="img-wrapper">
+                    <img :src="getPoster(movieData)" alt="">
+                  </div>
+                </div>
+                <div class="table__cell table__cell--backdrop">
+                  <div class="img-wrapper">
+                    <img :src="getBackdrop(movieData)" alt="">
+                  </div>
+                </div>
+              </div>
+              <div>
+                poster path/url <input type="text" :value="getPoster(movieData)"> <br>
+                backdrop path/url <input type="text" :value="getPoster(movieData)"> 
+              </div>
+              <textarea style="width:100%" id="" cols="30" rows="10" v-model="movieData.overview"></textarea>
+              <span>Director:</span><input type="text" placeholder="Enter director" :value="getDirectors(movieData)"><br>
+            </div>
+        </div>
+        <!--- CAST start-->
+        <div class="card" >
+            <div class="card__header">
+                <h2>Cast</h2>
+            </div>
+            <div class="card__body">
+                <div class="list-container">
+                <ul class="cast-list">
+                    <li class="cast-list__item" v-for="(cast, index) in movieData.cast">
+
+                    <div class="flex-h">
+                        <div class="image-wrapper flex-h__item flex-h__item--poster">
+                        <img :src="getProfPic(cast)" alt="artist name">
+                        </div>
+                        <div class="flex-h__item flex-h__item--character"> &nbsp;
+                        <input type="text" v-model="cast.name"><br> &nbsp;
+                        <input type="text" v-model="cast.character">
+                        </div>
+                    </div>
+                    <div>   
+                        <input type="text" :value="getProfPic(cast)"><button>browse</button>
+                    </div>
+                    </li>
+                    <button>Add cast</button>
+                </ul>
+                </div>
+            </div>
+        </div>
+      </article>
+    </div>
+    <script>
+        const {ipcRenderer} = require('electron');
+        const baseApiUrl='https://api.themoviedb.org/3/';
+        const imageApiUrl = 'http://image.tmdb.org/t/p/';
+        let movieData = {"_id":"D:/movies/Captain_America_Civil_War_2016_HD-TC_x264_AC3-CPG/Captain_America_Civil_War_2016_HD-TC_x264_AC3-CPG.mkv","title":"Captain America Civil War 2016 HD-TC x264 AC3-CPG","path":"D:/movies/Captain America Civil War 2016 HD-TC x264 AC3-CPG/Captain America Civil War 2016 HD-TC x264 AC3-CPG.mkv","ext":".mkv","dateAdded":"2017-07-29T15:39:33.103Z"};
+        let app = new Vue({
+            el: '#app',
+            data: {
+                movieData:movieData,
+            },
+            methods: {
+                getPoster: (movie) => movie.poster_path ? imageApiUrl+'w500'+movie.poster_path:'',
+                getBackdrop: (movie) => movie.backdrop_path ? imageApiUrl+'w500'+movie.backdrop_path:'',
+                getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
+                    return value.name;
+                }).join(', '):'',
+                getDirectors: (movie) => movie.directors ? movie.directors.map(function(value) {
+                    return value.name;
+                }).join(','):'',
+                getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
+                return value.name;
+                }).join(', '):'',
+                getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path
+            }
+        });
+
+        ipcRenderer.on('movieData', function(event, arg) {
+            console.log(arg);
+            app.movieData = arg;
+        })
+    </script>
+</body>
+</html>
