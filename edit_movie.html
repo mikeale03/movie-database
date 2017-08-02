@@ -9,7 +9,12 @@
     <title>Edit Data</title>
 </head>
 <body>
+    
     <div class="container" id="app">
+      <div class="menu">
+        <button class="menu__button" @click='save(movieData)'>Save</button><br>
+        <button class="menu__button" @click='fetchData(movieData)'>Fetch Data</button>
+      </div>
       <article>
         <div class="card">
             <div class="card__header">
@@ -20,18 +25,18 @@
               <div class="table">
                 <div class="table__cell table__cell--poster">
                   <div class="img-wrapper">
-                    <img :src="getPoster(movieData)" alt="">
+                    <img :src="movieData.poster_path" alt="">
                   </div>
                 </div>
                 <div class="table__cell table__cell--backdrop">
                   <div class="img-wrapper">
-                    <img :src="getBackdrop(movieData)" alt="">
+                    <img :src="movieData.backdrop_path" alt="">
                   </div>
                 </div>
               </div>
               <div>
-                poster path/url <input type="text" :value="getPoster(movieData)"> <br>
-                backdrop path/url <input type="text" :value="getPoster(movieData)"> 
+                poster path/url <input type="text" v-model="movieData.poster_path"> <br>
+                backdrop path/url <input type="text" v-model="movieData.backdrop_path"> 
               </div>
               <textarea style="width:100%" id="" cols="30" rows="10" v-model="movieData.overview"></textarea>
               <span>Director:</span><input type="text" placeholder="Enter director" :value="getDirectors(movieData)"><br>
@@ -49,7 +54,7 @@
 
                     <div class="flex-h">
                         <div class="image-wrapper flex-h__item flex-h__item--poster">
-                        <img :src="getProfPic(cast)" alt="artist name">
+                        <img :src="cast.profile_path" alt="artist name">
                         </div>
                         <div class="flex-h__item flex-h__item--character"> &nbsp;
                         <input type="text" v-model="cast.name"><br> &nbsp;
@@ -57,7 +62,7 @@
                         </div>
                     </div>
                     <div>   
-                        <input type="text" :value="getProfPic(cast)"><button>browse</button>
+                        <input type="text" v-model="cast.profile_path"><button>browse</button>
                     </div>
                     </li>
                     <button>Add cast</button>
@@ -71,15 +76,16 @@
         const {ipcRenderer} = require('electron');
         const baseApiUrl='https://api.themoviedb.org/3/';
         const imageApiUrl = 'http://image.tmdb.org/t/p/';
-        let movieData = {"_id":"D:/movies/Captain_America_Civil_War_2016_HD-TC_x264_AC3-CPG/Captain_America_Civil_War_2016_HD-TC_x264_AC3-CPG.mkv","title":"Captain America Civil War 2016 HD-TC x264 AC3-CPG","path":"D:/movies/Captain America Civil War 2016 HD-TC x264 AC3-CPG/Captain America Civil War 2016 HD-TC x264 AC3-CPG.mkv","ext":".mkv","dateAdded":"2017-07-29T15:39:33.103Z"};
+        const tmdb = require('./my_modules/tmdb');
+        let index;
+
+        let movieData = {};
         let app = new Vue({
             el: '#app',
             data: {
                 movieData:movieData,
             },
             methods: {
-                getPoster: (movie) => movie.poster_path ? imageApiUrl+'w500'+movie.poster_path:'',
-                getBackdrop: (movie) => movie.backdrop_path ? imageApiUrl+'w500'+movie.backdrop_path:'',
                 getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
                     return value.name;
                 }).join(', '):'',
@@ -89,13 +95,61 @@
                 getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
                 return value.name;
                 }).join(', '):'',
-                getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path
+                save: (movie) => {
+                    console.log(movie);
+                    ipcRenderer.send('saveEdit', movie, index);
+                },
+                fetchData: function (movie) {
+                    let vm = this;
+                    tmdb.searchMovie(movie)
+                    .then(function (response) {
+                        if(response.data.results.length) {
+                            let data = response.data.results[0];
+                            data.poster_path = imageApiUrl+'w500'+data.poster_path;
+                            data.backdrop_path = imageApiUrl+'w500'+data.backdrop_path;
+                            //db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
+                            vm.movieData = Object.assign({},vm.movieData, data);
+                            return tmdb.getMovieDetails(data.id);
+                        } else {
+                            alert("no match found!");
+                        }
+                    })
+                    .then(function(response) {
+                        response = response.data;
+                        let data = {
+                            genres:response.genres,
+                            imdb_id:response.imdb_id,
+                            cast:getCast(response.credits.cast,10).map(function(val) {
+                                val.profile_path = imageApiUrl+'w92'+val.profile_path;
+                                console.log(val);
+                                return val;
+                            }),
+                            directors:getDirectors(response.credits.crew)
+                        }
+                        vm.movieData = Object.assign({},vm.movieData, data);
+                        console.log(vm.movieData);
+                    })
+                    .catch(function (error) {
+                        alert(error);
+                    });
+                }
             }
         });
 
-        ipcRenderer.on('movieData', function(event, arg) {
-            console.log(arg);
-            app.movieData = arg;
+        function getCast(cast,limit) {
+            return cast.slice(0,limit);
+        }
+
+        function getDirectors(crew) {
+            return crew.filter(function(item) {
+                return item.job === 'Director';
+            })
+        }
+
+        ipcRenderer.on('movieData', function(event, movie, ind) {
+            app.movieData = movie;
+            console.log(app.movieData);
+            index = ind;
         })
     </script>
 </body>

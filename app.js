@@ -1,9 +1,10 @@
 const {remote,ipcRenderer} = require('electron')
 const {Menu, MenuItem} = remote
 const fs = require('fs');
+const tmdb = require('./my_modules/tmdb');
 var Datastore = require('nedb');
-let db = new Datastore({ filename: `${__dirname}/myDb` });
 
+let db = new Datastore({ filename: `${__dirname}/myDb` });
 let dir = 'D:/movies';
 
 let ctr;
@@ -17,13 +18,11 @@ db.loadDatabase(function (err) {    // Callback is optional1
   else console.log('Connected to database');
 });
 
-const key = 'e0cd722a80d8420b6c9ce28e0a86ac8f'
-
 let app = new Vue({
   el: '#app',
   data: {
     movies: [],
-    movieData:{cast:['ada','asdsa']},
+    movieData:{cast:[]},
     input:''
   },
   methods: {
@@ -33,13 +32,14 @@ let app = new Vue({
       console.log(movie.id);
       if (movie.id) {
         vm.movieData = movie;
-        vm.movieData.src = `${imageApiUrl}w500${movie.backdrop_path}`;
       } else {
-        axios.get(`${baseApiUrl}search/movie?api_key=${key}&language=en-US&query=${movie.title}&page=1&include_adult=false`)
+        tmdb.searchMovie(movie)
         .then(function (response) {
           console.log(response);
           if(response.data.results.length) {
             let data = response.data.results[0];
+            data.poster_path = imageApiUrl+'w500'+data.poster_path;
+            data.backdrop_path = imageApiUrl+'w500'+data.backdrop_path;
             db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
           } else {
             alert("no match found!");
@@ -59,16 +59,11 @@ let app = new Vue({
       });
       let vm = this;
       let regex = new RegExp(`${input}`,'i');
-      db.find({$or:[{title:regex},{'credits.cast.name':regex}]}, function(err, docs) {
-      //db.find({title:regex}, function(err, docs) {
+      db.find({$or:[{title:regex},{'cast.name':regex}]}, function(err, docs) {
         console.log(docs);
         vm.movies = docs
       });
     },
-
-    getPoster: (movie) => movie.poster_path ? imageApiUrl+'w500'+movie.poster_path:'',
-
-    getBackdrop: (movie) => movie.backdrop_path ? imageApiUrl+'w500'+movie.backdrop_path:'',
 
     getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
         return value.name;
@@ -82,11 +77,11 @@ let app = new Vue({
       return value.name;
     }).join(', '):'',
 
-    getProfPic: (cast) => imageApiUrl+'w92'+cast.profile_path,
-
-    showContextMenu: (movie,e) => {
-      menu.append(new MenuItem({label: 'Edit', click() { 
-        ipcRenderer.send('showEditMovie',movie);
+    showContextMenu: (movie,index,e) => {
+      const menu = new Menu()
+      menu.append(new MenuItem({label: 'Edit', data:movie, click(item) { 
+        console.log(item);
+        ipcRenderer.send('showEditMovie',movie, index);
       }}))
       e.preventDefault();
       menu.popup(remote.getCurrentWindow());
@@ -108,15 +103,19 @@ function updateDoc(err,numReplaced,doc) {
     vm.movieData = doc;
     vm.movies[vm.index] = doc;
     vm.movieData.src = `${imageApiUrl}/w500${doc.backdrop_path}`;
-    axios.get(`${baseApiUrl}movie/${doc.id}}?api_key=${key}&language=en-US&append_to_response=credits`)
+    tmdb.getMovieDetails(doc.id)
     .then(function (response) {
       console.log(response);
       response = response.data;
       
-      data = {
+      let data = {
         genres:response.genres,
         imdb_id:response.imdb_id,
-        cast:getCast(response.credits.cast,10),
+        cast:getCast(response.credits.cast,10).map(function(val) {
+          val.profile_path = imageApiUrl+'w92'+val.profile_path;
+          console.log(val);
+          return val;
+        }),
         directors:getDirectors(response.credits.crew)
       }
       db.update({_id:vm.movies[vm.index]._id},{ $set: data },{returnUpdatedDocs: true},addMoreInfo.bind(vm))
@@ -131,7 +130,6 @@ function addMoreInfo(err, numReplaced, doc) {
     else {
       this.movieData = doc;
       this.movies[this.index] = doc;
-      this.movieData.src = `${imageApiUrl}/w500${doc.backdrop_path}`;
       console.log(doc);
     }
 }
@@ -139,21 +137,19 @@ function addMoreInfo(err, numReplaced, doc) {
 function getCast(cast,limit) {
   return cast.slice(0,limit);
 }
+
 function getDirectors(crew) {
   return crew.filter(function(item) {
     return item.job === 'Director';
   })
 }
 
-
-
-
-const menu = new Menu()
-
-menu.append(new MenuItem({type: 'separator'}))
-menu.append(new MenuItem({label: 'MenuItem2', type: 'checkbox', checked: true}))
-
-/*window.addEventListener('contextmenu', (e) => {
-  e.preventDefault()
-  menu.popup(remote.getCurrentWindow())
-}, false)*/
+ipcRenderer.on('updateMovie', (event, movie, ind) => {
+  Vue.set(app.movies, ind, movie);
+  db.update({_id:movie._id},movie,function(err, numReplaced) {
+    if(err) console.log(err);
+    else console.log(numReplaced);
+  });
+  console.log(movie);
+  console.log(app.movies[ind]);
+});

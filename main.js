@@ -1,4 +1,4 @@
-const {app, BrowserWindow, Menu, MenuItem, ipcMain} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain} = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs');
@@ -36,6 +36,19 @@ function createWindow () {
     protocol: 'file:',
     slashes: true
   }))
+
+  editWin.onbeforeunload = function(e) {
+    console.log("hide");
+    return false;
+  }
+  editWin.on('close', (e) => {
+
+      /* the user only tried to close the window */
+      console.log("hide");
+      e.preventDefault();
+      editWin.hide();
+  });
+
 }
 
 // This method will be called when Electron has finished
@@ -170,30 +183,7 @@ function readDir(dir) {
   })
 }
 readDir('D:/movies');
-/*require('./read_dir')('D:/movies/new', ext, function(err,path,filename,ext) {
-  let id = path.replace(/ /g,"_");
-  db.find({_id:id}, function(err, docs) {
-    if(err) {
-      console.log(err);
-    } else {
-      if(docs.length === 0) {
-        let movie = {
-          _id: id,
-          title: filename,
-          path: path,
-          ext: ext,
-          dateAdded: new Date().toISOString()
-        };
-        db.insert(movie, function (err, newDoc) {   // Callback is optional
-          if(err) console.log(err.message);
-          else console.log(newDoc);
-        });
-        console.log('File', path, 'has been added');
-        ctr++;
-      }
-    }
-  });
-});*/
+
 
 const template = [
    {
@@ -223,7 +213,12 @@ const menu = Menu.buildFromTemplate(template)
 //Menu.setApplicationMenu(menu)
 
 //exports.editData = function()
-ipcMain.on('showEditMovie', function(event,movie) {
+ipcMain.on('showEditMovie', function(event,movie,ind) {
+  console.log(ind);
   editWin.show();
-  editWin.webContents.send('movieData',movie);
+  editWin.webContents.send('movieData',movie, ind);
+});
+
+ipcMain.on('saveEdit', (event, movie, ind) => {
+  win.webContents.send('updateMovie', movie, ind);
 });

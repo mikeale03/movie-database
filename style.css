@@ -136,7 +136,7 @@ input[type='text'] {
 .row__col-med {
     float: left;
     width: 70%;
-    background-color: yellow;
+    /*background-color: yellow;*/
     padding: 0;
     margin: 0;
 }
@@ -146,7 +146,7 @@ input[type='text'] {
     padding: 0;
     float: left;
     width: 30%;
-    background-color: green
+    /*background-color: green*/
 }
 .mid-container {
     flex: 1;
@@ -162,7 +162,17 @@ input[type='text'] {
     overflow: hidden;
 }
 
+.menu {
+    position: fixed;
+    right: 10px;
+    top:10px;
+    text-align: center;
+    z-index: 1;
+}
 
+.menu__button {
+    margin: 5px;
+}
 
 /* Let's get this party started */
 ::-webkit-scrollbar {

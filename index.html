@@ -24,12 +24,12 @@
               <div class="table">
                 <div class="table__cell table__cell--poster">
                   <div class="img-wrapper">
-                    <img :src="getPoster(movieData)" alt="">
+                    <img :src="movieData.poster_path||''" alt="">
                   </div>
                 </div>
                 <div class="table__cell table__cell--backdrop">
                   <div class="img-wrapper">
-                    <img :src="getBackdrop(movieData)" alt="">
+                    <img :src="movieData.backdrop_path||''" alt="">
                   </div>
                 </div>
               </div>
@@ -50,7 +50,7 @@
 
                     <div class="flex-h">
                       <div class="image-wrapper flex-h__item flex-h__item--poster">
-                        <img :src="getProfPic(cast)" alt="artist name">
+                        <img :src="cast.profile_path||''" alt="artist name">
                       </div>
                       <div class="flex-h__item flex-h__item--character"> &nbsp;
                         {{cast.name||''}} -- {{cast.character||''}}
@@ -67,7 +67,7 @@
         <aside class="row__col-small">
           <div class="list-container">
             <ul class="movie-list">
-              <li class="movie-list__item" v-for="(movie, index) in movies" @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,$event)">
+              <li class="movie-list__item" v-for="(movie, index) in movies" @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,index,$event)">
                 {{movie.title}}
               </li>
             </ul>
