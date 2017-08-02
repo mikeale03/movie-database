@@ -19,7 +19,8 @@
         <div class="card">
             <div class="card__header">
               <input type="text" placeholder="Enter Title" v-model="movieData.title">
-              <input type="text" placeholder="Enter Title" :value="getMovieGenres(movieData)">
+              <input type="text" placeholder="Enter Year" :value="getYear(movieData)" @blur="updateYear">
+              <input type="text" placeholder="Enter Genres" :value="getMovieGenres(movieData)" @blur="updateGenres">
             </div>
             <div class="card__body">
               <div class="table">
@@ -54,7 +55,7 @@
 
                     <div class="flex-h">
                         <div class="image-wrapper flex-h__item flex-h__item--poster">
-                        <img :src="cast.profile_path" alt="artist name">
+                        <img :src="cast.profile_path||'images/g7_p.gif'" alt="artist name">
                         </div>
                         <div class="flex-h__item flex-h__item--character"> &nbsp;
                         <input type="text" v-model="cast.name"><br> &nbsp;
@@ -74,8 +75,6 @@
     </div>
     <script>
         const {ipcRenderer} = require('electron');
-        const baseApiUrl='https://api.themoviedb.org/3/';
-        const imageApiUrl = 'http://image.tmdb.org/t/p/';
         const tmdb = require('./my_modules/tmdb');
         let index;
 
@@ -99,14 +98,15 @@
                     console.log(movie);
                     ipcRenderer.send('saveEdit', movie, index);
                 },
+                getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
                 fetchData: function (movie) {
                     let vm = this;
                     tmdb.searchMovie(movie)
                     .then(function (response) {
                         if(response.data.results.length) {
                             let data = response.data.results[0];
-                            data.poster_path = imageApiUrl+'w500'+data.poster_path;
-                            data.backdrop_path = imageApiUrl+'w500'+data.backdrop_path;
+                            data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
+                            data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
                             //db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
                             vm.movieData = Object.assign({},vm.movieData, data);
                             return tmdb.getMovieDetails(data.id);
@@ -120,7 +120,7 @@
                             genres:response.genres,
                             imdb_id:response.imdb_id,
                             cast:getCast(response.credits.cast,10).map(function(val) {
-                                val.profile_path = imageApiUrl+'w92'+val.profile_path;
+                                val.profile_path = tmdb.imageApiUrl+'w92'+val.profile_path;
                                 console.log(val);
                                 return val;
                             }),
@@ -132,6 +132,16 @@
                     .catch(function (error) {
                         alert(error);
                     });
+                },
+                updateGenres(event) {
+                    console.log(event);
+                    this.movieData.genres = event.srcElement.value.split(',').map(function(val) {
+                        return {name:val.trim()}; 
+                    });
+                    console.log(this.movieData.genres);
+                },
+                updateYear(event) {
+                    this.movieData.release_date = event.srcElement.value+'00-00'
                 }
             }
         });

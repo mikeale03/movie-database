@@ -64,7 +64,7 @@ let app = new Vue({
         vm.movies = docs
       });
     },
-
+    getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
     getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
         return value.name;
     }).join(', '):'',

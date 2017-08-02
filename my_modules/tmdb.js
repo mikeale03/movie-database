@@ -2,17 +2,17 @@ const axios = require('axios')
 
 module.exports = {
     apiKey : 'e0cd722a80d8420b6c9ce28e0a86ac8f',
+    baseApiUrl:'https://api.themoviedb.org/3/',
+    imageApiUrl : 'http://image.tmdb.org/t/p/',
     searchMovie(movie) {
-        let query = `${baseApiUrl}search/movie?api_key=${this.apiKey}&language=en-US&query=${movie.title}&page=1&include_adult=false`
-        query += movie.year ? `&year=${movie.year}`:''
+        let query = `${this.baseApiUrl}search/movie?api_key=${this.apiKey}&language=en-US&query=${movie.title}&page=1&include_adult=false`
+        query += movie.release_date ? `&year=${movie.release_date.slice(0,4)}`:''
         return axios.get(query)
     },
     getMovieDetails(id) {
-        let query = `${baseApiUrl}movie/${id}}?api_key=${this.apiKey}&language=en-US&append_to_response=credits`
+        let query = `${this.baseApiUrl}movie/${id}}?api_key=${this.apiKey}&language=en-US&append_to_response=credits`
         return axios.get(query)
-    },
-    baseApiUrl:'https://api.themoviedb.org/3/',
-    imageApiUrl : 'http://image.tmdb.org/t/p/'
+    }
 }
 
 function updateDoc(err,numReplaced,doc) {

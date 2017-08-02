@@ -17,19 +17,19 @@
         <article class="row__col-med">
           <div class="card">
             <div class="card__header">
-              <h1>{{movieData.title}}</h1>
+              <h1>{{movieData.title+' ('+getYear(movieData)+')'}}</h1>
               <span>{{getMovieGenres(movieData)}}</span>
             </div>
             <div class="card__body">
               <div class="table">
                 <div class="table__cell table__cell--poster">
                   <div class="img-wrapper">
-                    <img :src="movieData.poster_path||''" alt="">
+                    <img :src="movieData.poster_path||'images/g7_p.gif'" alt="">
                   </div>
                 </div>
                 <div class="table__cell table__cell--backdrop">
                   <div class="img-wrapper">
-                    <img :src="movieData.backdrop_path||''" alt="">
+                    <img :src="movieData.backdrop_path||'images/g7_l.gif'" alt="">
                   </div>
                 </div>
               </div>
