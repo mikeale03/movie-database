@@ -8,6 +8,18 @@ const fs = require('fs');
 let win
 let editWin
 
+const shouldQuit = app.makeSingleInstance((commandLine, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (win) {
+    if (win.isMinimized()) win.restore()
+    win.focus()
+  }
+})
+
+if (shouldQuit) {
+  app.quit()
+}
+
 function createWindow () {
   // Create the browser window.
   win = new BrowserWindow({width: 800, height: 600})
@@ -72,6 +84,7 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
 let ctr = 0;
 var Datastore = require('nedb');
 let db = new Datastore({ filename: `${__dirname}/myDb` });
@@ -168,7 +181,7 @@ function readDir(dir) {
               title: filename,
               path: path,
               ext: ext,
-              dateAdded: new Date().toISOString()
+              date_added: new Date().toISOString()
             };
             db.insert(movie, function (err, newDoc) {   // Callback is optional
               if(err) console.log(err.message);
@@ -182,7 +195,7 @@ function readDir(dir) {
     }
   })
 }
-readDir('D:/movies');
+//readDir('D:/movies');
 
 
 const template = [
@@ -193,7 +206,13 @@ const template = [
             label: 'Add File',
             click: function() {
               const {dialog} = require('electron')
-              console.log(dialog.showOpenDialog({properties: ['openFile','multiSelections']}))
+              let files = dialog.showOpenDialog({properties: ['openFile','multiSelections']})
+              if(files) {
+                files = files.map(function(val) {
+                    return val.replace(/\\/g,'/')
+                })
+              }
+              win.webContents.send('readFiles', files)
             }
          },
          {
@@ -201,8 +220,10 @@ const template = [
              click: function() {
               const {dialog} = require('electron')
               let dir = dialog.showOpenDialog({properties: ['openDirectory']})
-              dir = dir[0].replace(/\\/g,'/')
-              readDir(dir);
+              if(dir) {
+                dir = dir[0].replace(/\\/g,'/')
+                win.webContents.send('readDir', dir)              
+              }
             }
          }
       ]
@@ -210,7 +231,7 @@ const template = [
 ]
 
 const menu = Menu.buildFromTemplate(template)
-//Menu.setApplicationMenu(menu)
+Menu.setApplicationMenu(menu)
 
 //exports.editData = function()
 ipcMain.on('showEditMovie', function(event,movie,ind) {

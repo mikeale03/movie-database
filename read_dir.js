@@ -11,10 +11,14 @@ function rDir(dir) {
 }
 
 module.exports = function readDir(dir,ext, cb) {
+    //var filesCtr = 0;
     function getFiles(dir) {
         rDir(dir).then(function(data) {
+            console.log(data.length);
+            //filesCtr += data.length
             data.forEach(function(v) {
                 fs.stat(dir+'/'+v, function(err,stats) {
+                    //filesCtr--;
                     if(err) cb(err);
                     else if(stats.isDirectory()) {
                         getFiles(dir+'/'+v);
@@ -27,6 +31,7 @@ module.exports = function readDir(dir,ext, cb) {
                                 cb(null,dir+'/'+v+ex,v,ex);
                             }
                         }
+                        //if(filesCtr === 0) done();
                     }
                 })
             })

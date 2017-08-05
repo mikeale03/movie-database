@@ -1,5 +1,5 @@
 const {remote,ipcRenderer} = require('electron')
-const {Menu, MenuItem} = remote
+const {Menu, MenuItem, shell} = remote
 const fs = require('fs');
 const tmdb = require('./my_modules/tmdb');
 var Datastore = require('nedb');
@@ -22,7 +22,7 @@ let app = new Vue({
   el: '#app',
   data: {
     movies: [],
-    movieData:{cast:[]},
+    movieData:{title:'',cast:[]},
     input:''
   },
   methods: {
@@ -59,7 +59,7 @@ let app = new Vue({
       });
       let vm = this;
       let regex = new RegExp(`${input}`,'i');
-      db.find({$or:[{title:regex},{'cast.name':regex}]}, function(err, docs) {
+      db.find({$or:[{title:regex},{'cast.name':regex}]}).sort({date_added:-1}).exec(function(err, docs) {
         console.log(docs);
         vm.movies = docs
       });
@@ -85,18 +85,28 @@ let app = new Vue({
       }}))
       e.preventDefault();
       menu.popup(remote.getCurrentWindow());
+    },
+    play:(movie) => {
+      shell.openItem(movie.path);
     }
   },
-  created: function () {
+
+  created: function() {
     // `this` points to the vm instance
     let vm = this;
-    db.find({}, function(err, data) {
+    db.find({}).sort({date_added:-1}).exec(function(err, data) {
+      if(data[0]) {
+        vm.movies = data;
+        vm.movieData = data[0];
+      }
+    /*db.find({}, function(err, data) {
       vm.movies = data;
       vm.movieData = data[0];
       vm.movieData.src = `${imageApiUrl}w500${data[0].backdrop_path}`;
+    });*/
     });
   }
-});
+})
 
 function updateDoc(err,numReplaced,doc) {
     let vm = this;
@@ -112,7 +122,7 @@ function updateDoc(err,numReplaced,doc) {
         genres:response.genres,
         imdb_id:response.imdb_id,
         cast:getCast(response.credits.cast,10).map(function(val) {
-          val.profile_path = imageApiUrl+'w92'+val.profile_path;
+          val.profile_path = val.profile_path ? imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
           console.log(val);
           return val;
         }),
@@ -153,3 +163,73 @@ ipcRenderer.on('updateMovie', (event, movie, ind) => {
   console.log(movie);
   console.log(app.movies[ind]);
 });
+
+ipcRenderer.on('readDir', (event, dir) => {
+  readDir(dir)  
+})
+
+ipcRenderer.on('readFiles', (event, files) => {
+  files.forEach(function(path) {
+    let filename = path.slice(path.lastIndexOf('/')+1,path.length);
+    let ind = filename.lastIndexOf('.');
+    if(ind > 0) {
+        let ex = filename.slice(ind,filename.length);
+        filename = filename.slice(0,ind);
+        if(ext.indexOf(ex)>0) {
+          let id = path.replace(/ /g,"_");
+          db.find({_id:id}, function(err, docs) {
+            if(err) {
+              console.log(err);
+            } else if(docs.length === 0) {
+              let movie = {
+                _id: id,
+                title: filename,
+                path: path,
+                ext: ex,
+                date_added: new Date().toISOString()
+              };
+              db.insert(movie, function (err, newDoc) {   // Callback is optional
+                if(err) console.log(err.message);
+                else 
+                  //console.log(newDoc);
+                  app.movies.unshift(newDoc);
+              });
+              console.log('File', path, 'has been added');
+            }
+          });
+        }
+    }
+  })
+})
+
+function readDir(dir) {
+  let readDir = require('./read_dir');
+  readDir(dir, ext, function(err,path,filename,ext) {
+    if(err) console.log(err);
+    else {
+      let id = path.replace(/ /g,"_");
+      db.find({_id:id}, function(err, docs) {
+        if(err) {
+          console.log(err);
+        } else {
+          if(docs.length === 0) {
+            let movie = {
+              _id: id,
+              title: filename,
+              path: path,
+              ext: ext,
+              date_added: new Date().toISOString()
+            };
+            db.insert(movie, function (err, newDoc) {   // Callback is optional
+              if(err) console.log(err.message);
+              else 
+                //console.log(newDoc);
+                app.movies.unshift(newDoc);
+            });
+            console.log('File', path, 'has been added');
+          }
+        }
+      });
+    }
+  })
+}
