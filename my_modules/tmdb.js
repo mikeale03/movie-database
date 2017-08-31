@@ -12,6 +12,10 @@ module.exports = {
     getMovieDetails(id) {
         let query = `${this.baseApiUrl}movie/${id}}?api_key=${this.apiKey}&language=en-US&append_to_response=credits`
         return axios.get(query)
+    },
+    findImdbId(id) {
+      let query = `${this.baseApiUrl}find/${id}}?api_key=${this.apiKey}&language=en-US&external_source=imdb_id`
+      return axios.get(query)
     }
 }
 

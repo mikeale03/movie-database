@@ -1,5 +1,6 @@
 article {
     overflow: auto;
+    padding:10px;
 }
 
 aside {
@@ -12,7 +13,6 @@ html,body {
     width: 100vw;
     margin: 0;
     position: fixed;
-    padding-bottom: 100px;
 }
 
 button {
@@ -35,7 +35,6 @@ input[type='text'] {
     width: 80%;
 }
 
-
 span,p,ul {
     font-size: 0.85em;
 }
@@ -53,7 +52,9 @@ span,p,ul {
 }
 
 .card {
-    margin: 5px;
+    margin: 0;
+    border-bottom: 1px solid gray;
+    padding: 5px;
 }
 
 .card__header {
@@ -106,11 +107,18 @@ span,p,ul {
     display: table;
     width: 100%;
 }
+.table-row {
+    display: table-row;
+}
+
+.table-column {
+    display: table-column
+}
 
 .table__cell {
     display: table-cell;
     position: relative;
-    padding: 5px;
+    padding: 0px;
 }
 
 .table__cell--poster {
@@ -118,7 +126,8 @@ span,p,ul {
 }
 
 .table__cell--backdrop {
-    width: 70%;
+    padding-left:5px;
+    min-width: 70%;
     vertical-align: middle;
     height: 100%;
 }
@@ -176,13 +185,20 @@ span,p,ul {
 
 .movie-list__item {
     overflow: hidden;
-    height: 30px;
-    margin: 7px;
+    height: 35px;
     white-space: nowrap;
     box-sizing: border-box;
-    padding: 6px;
+    padding: 4px;
     border-top: 1px solid gray;
     border-bottom: 1px solid gray;
+    transition: all 0.3s;
+    user-select: none;
+    cursor: pointer;
+}
+
+.movie-list__item:hover {
+    background-color:#a5a4a8;
+    color:white;
 }
 
 .menu {
@@ -197,6 +213,18 @@ span,p,ul {
     margin: 5px;
 }
 
+.icon-star {
+    font-size: 28px;
+    color: yellow;
+}
+
+.icon-play-circled {
+    font-size: 20px;
+}
+
+.icon-play-circled:hover {
+    color:#1f3520  
+}
 /* Let's get this party started */
 ::-webkit-scrollbar {
     width: 5px;

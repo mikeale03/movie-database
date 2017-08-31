@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
+    <link rel="stylesheet" href="fontello/css/fontello.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
@@ -15,28 +16,35 @@
       </header>
       <div class="mid-container row">
         <article class="row__col-med">
-          <div class="card">
+          <div class="card" style="background: gray; color:white" v-if="movieData.title">
             <div class="card__header">
-              <h1>{{movieData.title+' ('+getYear(movieData)+')'}}</h1>
-              <span>{{getMovieGenres(movieData)}}</span>
+              <div style="position:relative">
+                  <h1>{{movieData.title+' ('+getYear(movieData)+')'}}</h1>
+                  <span style="position:absolute;right:0px;top:0px;font-size:20px;"><i class="icon-star" style></i>{{movieData.imdbRating||''}}</span>
+              </div>
+              <span>{{getGenres(movieData)}}</span>&nbsp;
+              <span style="color:black">|</span>&nbsp;
+              <span>{{getLanguages(movieData)}}</span>
             </div>
-            <div class="card__body">
+            <div class="card__body" style="padding:0px">
               <div class="table">
-                <div class="table__cell table__cell--poster">
-                  <div class="img-wrapper">
-                    <img :src="movieData.poster_path||'images/g7_p.gif'" alt="">
+                <div class="table__cell " v-bind:class="{'table__cell--poster':movieData.poster_path}">
+                  <div class="img-wrapper" v-if="movieData.poster_path">
+                    <img :src="movieData.poster_path" alt="">
                   </div>
                 </div>
                 <div class="table__cell table__cell--backdrop">
-                  <div class="img-wrapper">
+                  <div class="img-wrapper" v-if="movieData.backdrop_path">
                     <img class="backdrop-image" :src="movieData.backdrop_path||'images/g7_l.gif'" alt="">
                   </div>
                 </div>
               </div>
-              <p>{{movieData.overview||''}}</p>
-              <span>Director: {{getDirectors(movieData)}}</span><br>
-              <span>Cast: {{getCast(movieData)}}</span>
             </div>
+          </div>
+          <div class="card">
+            <p style="margin-top:0">{{movieData.overview||''}}</p>
+            <span><strong>Director</strong>: {{getDirector(movieData)}}</span><br>
+            <span><strong>Cast:</strong> {{getCast(movieData)}}</span>
           </div>
           <!--- CAST start-->
           <div class="card" v-if="movieData.cast">
@@ -69,7 +77,7 @@
             <ul class="movie-list">
               <li class="movie-list__item" v-for="(movie, index) in movies" 
               @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,index,$event)" @dblclick="play(movie)">
-                {{movie.title}}
+                <i class="icon-play-circled"></i>{{movie.title}}
               </li>
             </ul>
           </div>

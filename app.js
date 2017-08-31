@@ -2,6 +2,7 @@ const {remote,ipcRenderer} = require('electron')
 const {Menu, MenuItem, shell} = remote
 const fs = require('fs');
 const tmdb = require('./my_modules/tmdb');
+const omdb = require('./my_modules/omdb');
 var Datastore = require('nedb');
 
 let db = new Datastore({ filename: `${__dirname}/myDb` });
@@ -29,27 +30,76 @@ let app = new Vue({
     fetchData: function (movie, index) {
       let vm = this;
       vm.index = index;
-      console.log(movie.id);
-      if (movie.id) {
+      console.log(movie);
+      if (movie.isFetch) {
         vm.movieData = movie;
+        console.log(movie);
       } else {
+
+        /*omdb.searchMovie(movie.Title)
+        .then( (res) => {
+          if(res.data.Response) {
+            console.log(res);
+            res.data.isFetch = true;
+            vm.movieData = res.data;
+            vm.movies[vm.index] = res.data;
+            //return tmdb.findImdbId(response.imdbID);
+          } else {
+            console.log(res);
+          }
+        })*/
+          
         tmdb.searchMovie(movie)
         .then(function (response) {
           console.log(response);
           if(response.data.results.length) {
             let data = response.data.results[0];
+            data.isFetch = true;
             data.poster_path = imageApiUrl+'w500'+data.poster_path;
             data.backdrop_path = imageApiUrl+'w500'+data.backdrop_path;
-            db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
+            vm.movieData = Object.assign({},vm.movieData, data);
+            vm.movies[index] = vm.movieData;
+            return tmdb.getMovieDetails(data.id);
+            //db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
           } else {
             alert("no match found!");
+            let data = {isFetch:true};
             vm.movieData = movie;
+            vm.movies[index] = Object.assign({},vm.movieData, data);
+            db.update({_id:movie._id},{ $set: data })
           }
         })
+        .then( (response) => {
+          console.log(response);
+          response = response.data;
+          let data = {
+            genres:response.genres,
+            imdb_id:response.imdb_id,
+            languages: response.spoken_languages.map( value => value.name ),
+            runtime : require('./my_modules/time').minToHourFormat(response.runtime),
+            cast:getCast(response.credits.cast,15).map(function(val) {
+              val.profile_path = val.profile_path ? imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
+              return val;
+            }),
+            directors:getDirectors(response.credits.crew)
+          }
+          let newData = Object.assign({},vm.movieData,data);
+          vm.movieData = Object.assign({},newData,data);
+          vm.movies[index] = vm.movieData;
+          delete newData._id;
+          db.update({_id:movie._id}, newData, {returnUpdatedDocs: true},addMoreInfo.bind(vm))
+          return omdb.searchMovieId(data.imdb_id);
+    
+        })
+        .then((response) => {
+          let data = {imdbRating:response.data.imdbRating}
+          vm.movieData = Object.assign({},vm.movieData,data);
+          vm.movies[index] = vm.movieData;
+          db.update({_id:movie._id},{ $set: data });
+        }) 
         .catch(function (error) {
-          alert(error);
-          vm.movieData = movie;
-        });
+          console.log(error);          
+        })
       }
     },
     find: function(input) {
@@ -65,11 +115,11 @@ let app = new Vue({
       });
     },
     getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
-    getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
+    getGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
         return value.name;
     }).join(', '):'',
 
-    getDirectors: (movie) => movie.directors ? movie.directors.map(function(value) {
+    getDirector: (movie) => movie.directors ? movie.directors.map(function(value) {
         return value.name;
     }).join(','):'',
 
@@ -77,11 +127,20 @@ let app = new Vue({
       return value.name;
     }).join(', '):'',
 
-    showContextMenu: (movie,index,e) => {
+    getLanguages: (movie) => movie.languages ? movie.languages.join(', '):'',
+
+    showContextMenu: function(movie,index,e) {
+      let vm = this;
       const menu = new Menu()
-      menu.append(new MenuItem({label: 'Edit', data:movie, click(item) { 
+      menu.append(new MenuItem({label: 'Edit', click(item) { 
         console.log(item);
         ipcRenderer.send('showEditMovie',movie, index);
+      }}))
+      menu.append(new MenuItem({label: 'Delete', click() {
+        vm.movies.splice(index,1);
+      }}))
+      menu.append(new MenuItem({label: 'Show in directory', click() {
+        shell.showItemInFolder(movie.path);
       }}))
       e.preventDefault();
       menu.popup(remote.getCurrentWindow());
@@ -123,12 +182,12 @@ function updateDoc(err,numReplaced,doc) {
         imdb_id:response.imdb_id,
         cast:getCast(response.credits.cast,10).map(function(val) {
           val.profile_path = val.profile_path ? imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
-          console.log(val);
           return val;
         }),
         directors:getDirectors(response.credits.crew)
       }
       db.update({_id:vm.movies[vm.index]._id},{ $set: data },{returnUpdatedDocs: true},addMoreInfo.bind(vm))
+
     })
     .catch(function (error) {
       console.log(error);
@@ -138,8 +197,8 @@ function updateDoc(err,numReplaced,doc) {
 function addMoreInfo(err, numReplaced, doc) {
     if(err) console.log(err)
     else {
-      this.movieData = doc;
-      this.movies[this.index] = doc;
+      //this.movieData = doc;
+      //this.movies[this.index] = doc;
       console.log(doc);
     }
 }

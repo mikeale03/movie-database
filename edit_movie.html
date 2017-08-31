@@ -18,9 +18,10 @@
       <article>
         <div class="card">
             <div class="card__header">
-              <input type="text" placeholder="Enter Title" v-model="movieData.title">
-              <input type="text" placeholder="Enter Year" :value="getYear(movieData)" @blur="updateYear">
-              <input type="text" placeholder="Enter Genres" :value="getMovieGenres(movieData)" @blur="updateGenres">
+                Title: <br>
+              <input type="text" placeholder="Enter Title" v-model="movieData.title"><br>
+              Year: &nbsp; <input type="text" placeholder="Enter Year" :value="getYear(movieData)" @blur="updateYear"><br>
+              Genres: &nbsp; <input type="text" placeholder="Enter Genres" :value="getMovieGenres(movieData)" @blur="updateGenres">
             </div>
             <div class="card__body">
               <div class="table">
