@@ -5,26 +5,49 @@
     <title>Hello World!</title>
     <link rel="stylesheet" href="fontello/css/fontello.css">
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="vue.js"></script>
   </head>
   <body>
     <div class="container" id="app">
+      <div class="padding"></div>
       <header class="header">
-        <input class="header__input" type="text" placeholder="find movies" v-model="input">
-        <button class="header__button" @click="find(input)">find</button>
+        <div class="header__top table">
+          <div class="search-container">
+            <input class="header__input" type="text" placeholder="find movies" v-model="input" @keydown="debounceFind">
+            <button class="header__button" @click="find(input)"><i class="icon-search"></i> </button> 
+          </div>
+        </div>
+        <div class="header__bot">
+          <span>Recently Added</span>|<span>Top Rated</span>|<span>Most Watched</span>
+        </div>
       </header>
       <div class="mid-container row">
-        <article class="row__col-med">
-          <div class="card" style="background: gray; color:white" v-if="movieData.title">
-            <div class="card__header">
-              <div style="position:relative">
-                  <h1>{{movieData.title+' ('+getYear(movieData)+')'}}</h1>
-                  <span style="position:absolute;right:0px;top:0px;font-size:20px;"><i class="icon-star" style></i>{{movieData.imdbRating||''}}</span>
+        <article class="row__col-med" v-if="movieData.title">
+          <div class="card" style="background: #38393A; color:white" >
+            <div class="card__header" style="position:relative">
+              <div class="table title-container" style="position:relative">
+                  <div class="table__cell" style="flex:1">
+                    <h1>{{movieData.title+' '}}<span class="blue-hover" @click="find(movieData.year,'year')">{{displayYear(movieData)}}</span></h1>
+                  </div>
+                  <div class="table__cell icon-wrap" v-if="movieData.imdbRating">
+                    <i class="icon-star"></i>
+                  </div>
+                  <div class="table__cell imdb-wrap" v-if="movieData.imdbRating">
+                    <span style="font-size:25px;">{{movieData.imdbRating||''}}</span><br>
+                    <sup>imdb</sup>
+                  </div>  
               </div>
-              <span>{{getGenres(movieData)}}</span>&nbsp;
-              <span style="color:black">|</span>&nbsp;
-              <span>{{getLanguages(movieData)}}</span>
+              <div v-for="(genre, index) in movieData.genres" @click="find(genre)" style="display:inline-block">
+                  <span class="blue-hover">{{genre}}</span>
+                  <span style="margin-left:-3px" v-if="(index+1) < movieData.genres.length">,&nbsp;</span>
+              </div>
+              <!--<span>{{getGenres(movieData)}}</span>&nbsp;-->
+              <span style="color:black" v-if="movieData.genres">|</span>
+              <div v-for="(language, index) in movieData.languages" @click="find(language)" style="display:inline-block">
+                <span class="blue-hover">{{language}}</span>
+                <span style="margin-left:-3px" v-if="(index+1) < movieData.languages.length">,&nbsp;</span>
+              </div>
             </div>
             <div class="card__body" style="padding:0px">
               <div class="table">
@@ -35,16 +58,32 @@
                 </div>
                 <div class="table__cell table__cell--backdrop">
                   <div class="img-wrapper" v-if="movieData.backdrop_path">
+                    <i class="icon-play-circled2"></i>
                     <img class="backdrop-image" :src="movieData.backdrop_path||'images/g7_l.gif'" alt="">
+                    <span style="position:absolute;left:20px;bottom:5px;">{{movieData.runtime}}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="card">
+
+          <div class="card overview">
             <p style="margin-top:0">{{movieData.overview||''}}</p>
-            <span><strong>Director</strong>: {{getDirector(movieData)}}</span><br>
-            <span><strong>Cast:</strong> {{getCast(movieData)}}</span>
+            <div v-if="movieData.directors">
+              <span ><strong>Director: </strong></span>
+              <div v-for="(director, index) in movieData.directors" @click="find(director.name,'director')" style="display:inline-block">
+                  <span class="underline-hover" style="color:#262685">{{director.name}}</span>
+                  <span style="margin-left:-3px" v-if="(index+1) < movieData.directors.length">,&nbsp;</span>
+              </div>
+              <!--<span ><strong>Director: </strong></span> <span style="color:#262685">{{getDirector(movieData)}}</span>-->
+            </div>
+            <div v-if="movieData.cast">
+              <span ><strong>Cast: </strong></span> 
+              <div v-for="(cast, index) in movieData.cast.slice(0,3)" @click="find(cast.name,'cast')" style="display:inline-block">
+                  <span class="underline-hover" style="color:#262685">{{cast.name}}</span>
+                  <span style="margin-left:-3px" v-if="(index+1) < movieData.cast.slice(0,3).length">,&nbsp;</span>
+              </div>
+            </div>
           </div>
           <!--- CAST start-->
           <div class="card" v-if="movieData.cast">
@@ -58,10 +97,10 @@
 
                     <div class="flex-h">
                       <div class="image-wrapper flex-h__item flex-h__item--poster">
-                        <img :src="cast.profile_path" alt="artist name">
+                        <img :src="cast.profile_path" alt="" @error="imageError">
                       </div>
                       <div class="flex-h__item flex-h__item--character"> &nbsp;
-                        {{cast.name||''}} -- {{cast.character||''}}
+                        <span class="underline-hover" style="color:#262685" @click="find(cast.name,'cast')">{{cast.name||''}}</span> <span> -- {{cast.character||''}}</span> 
                       </div>
                     </div>
 
@@ -72,12 +111,13 @@
           </div>
           <!--- CAST end-->
         </article>
+        <article class="row__col-med" v-else><h1>No movies added</h1></article>
         <aside class="row__col-small">
           <div class="list-container">
             <ul class="movie-list">
               <li class="movie-list__item" v-for="(movie, index) in movies" 
-              @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,index,$event)" @dblclick="play(movie)">
-                <i class="icon-play-circled"></i>{{movie.title}}
+              @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,index,$event)" >
+                <i class="icon-play-circled" @click="play(movie)"></i>{{displayTitle(movie)}}
               </li>
             </ul>
           </div>

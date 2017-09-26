@@ -1,4 +1,4 @@
-const {app, BrowserWindow, Menu, ipcMain} = require('electron')
+const {app, BrowserWindow, Menu, ipcMain, shell} = require('electron')
 const path = require('path')
 const url = require('url')
 const fs = require('fs');
@@ -202,6 +202,17 @@ const template = [
    {
       label: 'File',
       submenu: [
+          {
+            label: 'Add Library',
+            click: function() {
+              const {dialog} = require('electron')
+              let dir = dialog.showOpenDialog({properties: ['openDirectory']})
+              if(dir) {
+                dir = dir[0].replace(/\\/g,'/')
+                win.webContents.send('addLib', dir)              
+              }
+            }
+          },
          {
             label: 'Add File',
             click: function() {
@@ -243,3 +254,7 @@ ipcMain.on('showEditMovie', function(event,movie,ind) {
 ipcMain.on('saveEdit', (event, movie, ind) => {
   win.webContents.send('updateMovie', movie, ind);
 });
+
+ipcMain.on('play', (event, path) => {
+  shell.openItem(path);
+})

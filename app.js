@@ -3,21 +3,16 @@ const {Menu, MenuItem, shell} = remote
 const fs = require('fs');
 const tmdb = require('./my_modules/tmdb');
 const omdb = require('./my_modules/omdb');
-var Datastore = require('nedb');
 
-let db = new Datastore({ filename: `${__dirname}/myDb` });
-let dir = 'D:/movies';
-
-let ctr;
-let ext = ['.mpg','.mpeg','.mkv','.mp4','.avi','.flv', '.mov','wmv','.vob'];
-
-const baseApiUrl='https://api.themoviedb.org/3/';
-const imageApiUrl = 'http://image.tmdb.org/t/p/';
+//var Datastore = require('nedb');
+let database = require('./my_modules/database');
+let db = new database(`${__dirname}/database/myDb`).db;
+/*let db = new Datastore({ filename: `${__dirname}/database/myDb` });
 
 db.loadDatabase(function (err) {    // Callback is optional1
   if(err) console.log(err.message);
   else console.log('Connected to database');
-});
+});*/
 
 let app = new Vue({
   el: '#app',
@@ -29,105 +24,113 @@ let app = new Vue({
   methods: {
     fetchData: function (movie, index) {
       let vm = this;
-      vm.index = index;
       console.log(movie);
+
       if (movie.isFetch) {
-        vm.movieData = movie;
+        vm.movieData = Object.assign({},movie);
         console.log(movie);
       } else {
 
-        /*omdb.searchMovie(movie.Title)
-        .then( (res) => {
-          if(res.data.Response) {
-            console.log(res);
-            res.data.isFetch = true;
-            vm.movieData = res.data;
-            vm.movies[vm.index] = res.data;
-            //return tmdb.findImdbId(response.imdbID);
-          } else {
-            console.log(res);
-          }
-        })*/
-          
+        let selectedMovie = vm.movies[index];
         tmdb.searchMovie(movie)
         .then(function (response) {
           console.log(response);
           if(response.data.results.length) {
             let data = response.data.results[0];
             data.isFetch = true;
-            data.poster_path = imageApiUrl+'w500'+data.poster_path;
-            data.backdrop_path = imageApiUrl+'w500'+data.backdrop_path;
-            vm.movieData = Object.assign({},vm.movieData, data);
-            vm.movies[index] = vm.movieData;
+            data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
+            data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
+            data.year = parseInt(data.release_date.slice(0,4));
+            vm.movieData = Object.assign({}, movie, data);
+            selectedMovie = Object.assign({},vm.movieData);
             return tmdb.getMovieDetails(data.id);
             //db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
           } else {
+
             alert("no match found!");
-            let data = {isFetch:true};
+            movie.isFetch = true;
             vm.movieData = movie;
-            vm.movies[index] = Object.assign({},vm.movieData, data);
-            db.update({_id:movie._id},{ $set: data })
+            vm.movies.splice(index,1,movie);
+            db.update({_id:movie._id},movie);
           }
         })
+
         .then( (response) => {
-          console.log(response);
-          response = response.data;
-          let data = {
-            genres:response.genres,
-            imdb_id:response.imdb_id,
-            languages: response.spoken_languages.map( value => value.name ),
-            runtime : require('./my_modules/time').minToHourFormat(response.runtime),
-            cast:getCast(response.credits.cast,15).map(function(val) {
-              val.profile_path = val.profile_path ? imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
-              return val;
-            }),
-            directors:getDirectors(response.credits.crew)
+          //console.log(response);
+          if(response) {
+            response = response.data;
+            let data = {
+              genres:response.genres.map( value => value.name ),
+              imdb_id:response.imdb_id,
+              languages: response.spoken_languages.map( value => value.name ),
+              runtime : require('./my_modules/time').minToHourFormat(response.runtime),
+              cast:getCast(response.credits.cast,15).map(function(val) {
+                val.profile_path = val.profile_path ? tmdb.imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
+                return val;
+              }),
+              directors:getDirectors(response.credits.crew)
+            }
+            selectedMovie = Object.assign({},selectedMovie,data);
+            //vm.movies[index] = Object.assign({},vm.movieData,data);
+            vm.movieData = Object.assign({},selectedMovie,data);
+            //delete selectedMovie._id;
+            db.update({_id:movie._id}, selectedMovie, {returnUpdatedDocs: true},addMoreInfo.bind(vm))
+            return omdb.searchMovieId(data.imdb_id);
           }
-          let newData = Object.assign({},vm.movieData,data);
-          vm.movieData = Object.assign({},newData,data);
-          vm.movies[index] = vm.movieData;
-          delete newData._id;
-          db.update({_id:movie._id}, newData, {returnUpdatedDocs: true},addMoreInfo.bind(vm))
-          return omdb.searchMovieId(data.imdb_id);
-    
         })
         .then((response) => {
-          let data = {imdbRating:response.data.imdbRating}
-          vm.movieData = Object.assign({},vm.movieData,data);
-          vm.movies[index] = vm.movieData;
-          db.update({_id:movie._id},{ $set: data });
+          if(response) {
+            let data = {imdbRating:response.data.imdbRating}
+            vm.movieData = Object.assign({},selectedMovie,data);
+            db.update({_id:movie._id},{ $set: data }, {returnUpdatedDocs: true},function(err, numReplaced, doc) {
+              console.log(numReplaced);
+              if(err) alert(err);
+              else
+                vm.movies.splice(index,1,doc); 
+            });
+          }
         }) 
         .catch(function (error) {
-          console.log(error);          
+          alert(`Api Error: ${error.message}`);          
         })
       }
     },
-    find: function(input) {
-      db.loadDatabase(function (err) {    // Callback is optional1
-        if(err) console.log(err.message);
-        else console.log('Connected to database');
-      });
+    find: function(input,type,skip,limit) {
       let vm = this;
-      let regex = new RegExp(`${input}`,'i');
-      db.find({$or:[{title:regex},{'cast.name':regex}]}).sort({date_added:-1}).exec(function(err, docs) {
-        console.log(docs);
-        vm.movies = docs
-      });
+      let Search = require('./my_modules/search');
+      let searcher = new Search(db);
+      searcher.search(input,type,skip,limit).exec((err,docs) => {
+        if(err) alert(err);
+        else {
+          vm.movies = docs;
+          vm.movieData = vm.movies[0]||vm.movieData;
+        }
+      })
     },
-    getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
+
+    debounceFind: require('./my_modules/debounce') ( function() {
+      this.find(this.input);
+    },500),
+
+    displayTitle: (movie) =>  movie.year ? movie.title +" ("+movie.year+")" :movie.title,
+    displayYear: (movie) => movie.year ? "("+movie.year+")" :'',
     getGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
         return value.name;
     }).join(', '):'',
 
     getDirector: (movie) => movie.directors ? movie.directors.map(function(value) {
         return value.name;
-    }).join(','):'',
+    }).join(', '):'',
 
     getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
       return value.name;
     }).join(', '):'',
 
-    getLanguages: (movie) => movie.languages ? movie.languages.join(', '):'',
+    imageError: function(event) {
+      console.log(event);
+      event.srcElement.src = "images/noImage.png";
+    },
+    getLanguages: (movie) => movie.languages ? movie.languages.join(', ').split(' '):[],
 
     showContextMenu: function(movie,index,e) {
       let vm = this;
@@ -146,13 +149,16 @@ let app = new Vue({
       menu.popup(remote.getCurrentWindow());
     },
     play:(movie) => {
-      shell.openItem(movie.path);
+      console.log(movie.path);
+      shell.openItem('file:'+movie.path);
+      //ipcRenderer.send('play',movie.path);
     }
   },
 
   created: function() {
     // `this` points to the vm instance
     let vm = this;
+    
     db.find({}).sort({date_added:-1}).exec(function(err, data) {
       if(data[0]) {
         vm.movies = data;
@@ -167,7 +173,7 @@ let app = new Vue({
   }
 })
 
-function updateDoc(err,numReplaced,doc) {
+/*function updateDoc(err,numReplaced,doc) {
     let vm = this;
     vm.movieData = doc;
     vm.movies[vm.index] = doc;
@@ -186,19 +192,25 @@ function updateDoc(err,numReplaced,doc) {
         }),
         directors:getDirectors(response.credits.crew)
       }
-      db.update({_id:vm.movies[vm.index]._id},{ $set: data },{returnUpdatedDocs: true},addMoreInfo.bind(vm))
-
+      db.update({_id:vm.movies[vm.index]._id},{ $set: data },{returnUpdatedDocs: true}, function(err, numReplaced, doc) {
+        if(err) console.log(err)
+        else {
+          //this.movieData = doc;
+          selectedMovie = doc;
+          console.log(doc);
+        }
+      })
     })
     .catch(function (error) {
       console.log(error);
     });
-}
+}*/
 
 function addMoreInfo(err, numReplaced, doc) {
     if(err) console.log(err)
     else {
       //this.movieData = doc;
-      //this.movies[this.index] = doc;
+      this.movies[this.index] = doc;
       console.log(doc);
     }
 }
@@ -222,6 +234,27 @@ ipcRenderer.on('updateMovie', (event, movie, ind) => {
   console.log(movie);
   console.log(app.movies[ind]);
 });
+
+ipcRenderer.on('addLib', (event,dir) => {
+  let id = dir.replace(/ /g,"_");
+  lib.find({_id:id}, function(err, docs) {
+    if(err) {
+      console.log(err);
+    } else if(docs.length === 0) {
+      let data = {
+        _id: id,
+        path: dir,
+        name: dir.slice(dir.lastIndexOf('/')+1,dir.length)
+      };
+      lib.insert(data, function (err, newDoc)  {  // Callback is optional
+        if(err) console.log(err.message);
+        else 
+          console.log(newDoc);
+      });
+    }
+  })
+  readDir(dir);
+})
 
 ipcRenderer.on('readDir', (event, dir) => {
   readDir(dir)  
@@ -263,6 +296,7 @@ ipcRenderer.on('readFiles', (event, files) => {
 
 function readDir(dir) {
   let readDir = require('./read_dir');
+  let ext = ['.avi','.mp4', '.mkv', '.mpeg', '.wmv', '.mpg', '.flv','.webm']
   readDir(dir, ext, function(err,path,filename,ext) {
     if(err) console.log(err);
     else {

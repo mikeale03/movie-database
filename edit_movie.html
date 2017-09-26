@@ -10,40 +10,63 @@
 </head>
 <body>
     
-    <div class="container" id="app">
-      <div class="menu">
-        <button class="menu__button" @click='save(movieData)'>Save</button><br>
-        <button class="menu__button" @click='fetchData(movieData)'>Fetch Data</button>
-      </div>
-      <article>
-        <div class="card">
-            <div class="card__header">
-                Title: <br>
-              <input type="text" placeholder="Enter Title" v-model="movieData.title"><br>
-              Year: &nbsp; <input type="text" placeholder="Enter Year" :value="getYear(movieData)" @blur="updateYear"><br>
-              Genres: &nbsp; <input type="text" placeholder="Enter Genres" :value="getMovieGenres(movieData)" @blur="updateGenres">
-            </div>
-            <div class="card__body">
-              <div class="table">
-                <div class="table__cell table__cell--poster">
-                  <div class="img-wrapper">
+    <div class="container" id="app" style="overflow:scroll">
+        <div class="menu">
+            <button class="menu__button" @click='save(movieData)'>Save</button><br>
+            <button class="menu__button" @click='fetchData(movieData)'>Fetch Data</button>
+        </div>
+        <div class="input-container">
+            <label for="imdb">Imdb id:</label><input type="text" id="imdb" class="edit-input" placeholder="Enter imdb id" v-model="movieData.imdb_id">
+        </div>
+
+        <div class="input-container">
+            <label for="title">Title:</label><input type="text" id="title" class="edit-input" placeholder="Enter Title" v-model="movieData.title">
+        </div>
+
+        <div class="input-container">
+            <label for="year">Year:</label><input type="number" id="year" class="edit-input edit-input--year" placeholder="Enter Year" v-model="movieData.year" style="width:100px" >
+            <label for="rating">Rating:</label><input type="number" id="rating" class="edit-input edit-input--rating" placeholder="Enter imdb rating" v-model="movieData.imdbRating" style="width:100px">
+        </div>
+        
+        <div class="input-container">
+            <label for="genres">Genres:</label><input type="text" id="genres" class="edit-input" placeholder="Enter Genres" :value="getMovieGenres(movieData)" @blur="updateGenres">
+        </div>
+
+        <div class="input-container">
+            <label for="language">Language:</label><input type="text" id="language" class="edit-input" placeholder="Enter language" :value="getLanguages(movieData)" @blur="updateLanguages">
+        </div>
+
+        <div class="table">
+            <div class="table__cell table__cell--poster">
+                <div class="img-wrapper">
                     <img :src="movieData.poster_path" alt="">
-                  </div>
                 </div>
-                <div class="table__cell table__cell--backdrop">
-                  <div class="img-wrapper">
-                    <img :src="movieData.backdrop_path" alt="">
-                  </div>
+            </div>
+            <div class="table__cell table__cell--backdrop">
+                <div class="img-wrapper-edit">
+                    <img class="backdrop-image" :src="movieData.backdrop_path" alt="">
                 </div>
-              </div>
-              <div>
-                poster path/url <input type="text" v-model="movieData.poster_path"> <br>
-                backdrop path/url <input type="text" v-model="movieData.backdrop_path"> 
-              </div>
-              <textarea style="width:100%" id="" cols="30" rows="10" v-model="movieData.overview"></textarea>
-              <span>Director:</span><input type="text" placeholder="Enter director" :value="getDirectors(movieData)"><br>
             </div>
         </div>
+
+        <div class="input-container">
+            <label for="poster">Poster:</label><input type="text" id="poster" class="edit-input" placeholder="Enter poster image path or url" v-model="movieData.poster_path" >
+        </div>
+
+        <div class="input-container">
+            <label for="backdrop">Backdrop:</label><input type="text" id="backdrop" class="edit-input" placeholder="Enter backdrop image path or url" v-model="movieData.backdrop_path" >
+        </div>
+
+        <div class="input-container">
+            Plot: <br>
+            <textarea style="width:100%" id="" cols="30" rows="10" v-model="movieData.overview"></textarea>
+        </div>
+
+        <div class="input-container">
+            <label for="director">Director:</label><input type="text" id="director" class="edit-input" placeholder="Enter director" :value="getDirectors(movieData)" @blur="updateDirector">
+        </div>
+        <!--<span>Director:</span><input type="text" placeholder="Enter director" :value="getDirectors(movieData)"><br>-->
+           
         <!--- CAST start-->
         <div class="card" >
             <div class="card__header">
@@ -52,31 +75,34 @@
             <div class="card__body">
                 <div class="list-container">
                 <ul class="cast-list">
-                    <li class="cast-list__item" v-for="(cast, index) in movieData.cast">
-
-                    <div class="flex-h">
-                        <div class="image-wrapper flex-h__item flex-h__item--poster">
-                        <img :src="cast.profile_path||'images/g7_p.gif'" alt="artist name">
+                    <li class="cast-list__item--edit" v-for="(cast, index) in movieData.cast">
+                        <div class="flex-h">
+                            <div class="image-wrapper flex-h__item flex-h__item--poster">
+                                <img :src="cast.profile_path||'images/noImage.png'">
+                            </div>
+                            <div class="flex-h__item flex-h__item--character"> 
+                                <div class="input-container">
+                                    <label for="cast">Cast name:</label><input type="text" id="cast" class="edit-input--cast" v-model="cast.name" placeholder="Enter actor/actress name">
+                                </div>
+                                <div class="input-container">
+                                    <label for="character">Character:</label><input type="text" id="character" class="edit-input--cast" v-model="cast.character" placeholder="Enter character name">
+                                </div>
+                            </div>
                         </div>
-                        <div class="flex-h__item flex-h__item--character"> &nbsp;
-                        <input type="text" v-model="cast.name"><br> &nbsp;
-                        <input type="text" v-model="cast.character">
+                        <div>   
+                            <label for="profile-pic">Profile image:</label><input type="text" id="profile-pic" class="edit-input--profile" v-model="cast.profile_path"> &nbsp; <button @click="deleteCast(index)">delete</button>
                         </div>
-                    </div>
-                    <div>   
-                        <input type="text" v-model="cast.profile_path"><button>browse</button>
-                    </div>
                     </li>
-                    <button>Add cast</button>
+                    <button @click="addCast">Add cast</button>
                 </ul>
                 </div>
             </div>
         </div>
-      </article>
     </div>
     <script>
         const {ipcRenderer} = require('electron');
         const tmdb = require('./my_modules/tmdb');
+        const omdb = require('./my_modules/omdb');
         let index;
 
         let movieData = {};
@@ -86,17 +112,17 @@
                 movieData:movieData,
             },
             methods: {
-                getMovieGenres: (movie) => movie.genres ? movie.genres.map(function(value) {
-                    return value.name;
-                }).join(', '):'',
+                getMovieGenres: (movie) => movie.genres ? movie.genres.join(', '):'',
                 getDirectors: (movie) => movie.directors ? movie.directors.map(function(value) {
                     return value.name;
-                }).join(','):'',
+                }).join(', '):'',
                 getCast: (movie) => movie.cast ? movie.cast.slice(0,3).map(function(value) {
                 return value.name;
                 }).join(', '):'',
+                getLanguages: (movie) => movie.languages ? movie.languages.join(', '):'',
                 save: (movie) => {
                     console.log(movie);
+                    movie.isFetch = true;
                     ipcRenderer.send('saveEdit', movie, index);
                 },
                 getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
@@ -106,9 +132,10 @@
                     .then(function (response) {
                         if(response.data.results.length) {
                             let data = response.data.results[0];
+                            data.isFetch = true;
                             data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
                             data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
-                            //db.update({_id:movie._id},{ $set: data },{returnUpdatedDocs:true},updateDoc.bind(vm))
+                            data.year = parseInt(data.release_date.slice(0,4));
                             vm.movieData = Object.assign({},vm.movieData, data);
                             return tmdb.getMovieDetails(data.id);
                         } else {
@@ -118,31 +145,60 @@
                     .then(function(response) {
                         response = response.data;
                         let data = {
-                            genres:response.genres,
-                            imdb_id:response.imdb_id,
-                            cast:getCast(response.credits.cast,10).map(function(val) {
-                                val.profile_path = tmdb.imageApiUrl+'w92'+val.profile_path;
-                                console.log(val);
-                                return val;
-                            }),
-                            directors:getDirectors(response.credits.crew)
+                          genres:response.genres.map( value => value.name ),
+                          imdb_id:response.imdb_id,
+                          languages: response.spoken_languages.map( value => value.name ),
+                          runtime : require('./my_modules/time').minToHourFormat(response.runtime),
+                          cast:getCast(response.credits.cast,15).map(function(val) {
+                            val.profile_path = val.profile_path ? tmdb.imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
+                            return val;
+                          }),
+                          directors:getDirectors(response.credits.crew)
                         }
                         vm.movieData = Object.assign({},vm.movieData, data);
                         console.log(vm.movieData);
+                        return omdb.searchMovieId(data.imdb_id);
                     })
+                    .then((response) => {
+                        if(response) {
+                            let data = {imdbRating:response.data.imdbRating}
+                            vm.movieData = Object.assign({},vm.movieData,data);
+                        }
+                    }) 
                     .catch(function (error) {
-                        alert(error);
+                        alert(`Api Error: ${error.message}`);
                     });
                 },
                 updateGenres(event) {
                     console.log(event);
                     this.movieData.genres = event.srcElement.value.split(',').map(function(val) {
-                        return {name:val.trim()}; 
+                        return val.trim(); 
                     });
                     console.log(this.movieData.genres);
                 },
-                updateYear(event) {
-                    this.movieData.release_date = event.srcElement.value+'00-00'
+                updateDirector(event) {
+                    this.movieData.directors = event.srcElement.value.split(',').map(function(val) {
+                        return {name:val.trim()}; 
+                    });
+                },
+                updateLanguages(event) {
+                    this.movieData.languages = event.srcElement.value.split(',').map(function(val) {
+                        return val.trim(); 
+                    });
+                },
+                updateView() {
+                    this.movieData = Object.assign({},this.movieData);
+                },
+                addCast(event) {
+                    if(this.movieData.cast)
+                        this.movieData.cast.push({character:'',name:'',profile_path:''});
+                    else {
+                        this.movieData = Object.assign({},this.movieData,{cast:[{character:'',name:'',profile_path:''}]})
+                    }
+                    console.log(this.movieData);
+                },
+                deleteCast(index) {
+                    this.movieData.cast.splice(index,1);
                 }
             }
         });
@@ -159,6 +215,9 @@
 
         ipcRenderer.on('movieData', function(event, movie, ind) {
             app.movieData = movie;
+            app.movieData.poster_path = app.movieData.poster_path ? app.movieData.poster_path : "";
+            app.movieData.backdrop_path = app.movieData.backdrop_path ? app.movieData.backdrop_path : "";
+            app.updateView();
             console.log(app.movieData);
             index = ind;
         })
