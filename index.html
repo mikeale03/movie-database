@@ -15,11 +15,27 @@
         <div class="header__top table">
           <div class="search-container">
             <input class="header__input" type="text" placeholder="find movies" v-model="input" @keydown="debounceFind">
-            <button class="header__button" @click="find(input)"><i class="icon-search"></i> </button> 
+            <select class="type-select" v-model="type" @change="find(input,type)">
+              <option value="all">All</option>
+              <option value="title">Title</option>
+              <option value="cast">Cast</option>
+              <option value="director">Director</option>
+              <option value="genre">Genre</option>
+              <option value="language">Language</option>
+            </select>
+            <button class="header__button" @click="find(input,type)"><i class="icon-search"></i> </button> 
           </div>
         </div>
         <div class="header__bot">
-          <span>Recently Added</span>|<span>Top Rated</span>|<span>Most Watched</span>
+          <span class="blue-hover" @click="find(0,'recent-added',0,100)">
+            Recently Added
+          </span>|
+          <span class="blue-hover" @click="find(0,'top-rated')">
+            Top Rated
+          </span>
+          <!--<span>
+            Most Watched
+          </span>-->
         </div>
       </header>
       <div class="mid-container row">
@@ -38,13 +54,13 @@
                     <sup>imdb</sup>
                   </div>  
               </div>
-              <div v-for="(genre, index) in movieData.genres" @click="find(genre)" style="display:inline-block">
+              <div v-for="(genre, index) in movieData.genres" @click="find(genre,'genres')" style="display:inline-block">
                   <span class="blue-hover">{{genre}}</span>
                   <span style="margin-left:-3px" v-if="(index+1) < movieData.genres.length">,&nbsp;</span>
               </div>
               <!--<span>{{getGenres(movieData)}}</span>&nbsp;-->
               <span style="color:black" v-if="movieData.genres">|</span>
-              <div v-for="(language, index) in movieData.languages" @click="find(language)" style="display:inline-block">
+              <div v-for="(language, index) in movieData.languages" @click="find(language,'language')" style="display:inline-block">
                 <span class="blue-hover">{{language}}</span>
                 <span style="margin-left:-3px" v-if="(index+1) < movieData.languages.length">,&nbsp;</span>
               </div>
@@ -58,7 +74,7 @@
                 </div>
                 <div class="table__cell table__cell--backdrop">
                   <div class="img-wrapper" v-if="movieData.backdrop_path">
-                    <i class="icon-play-circled2"></i>
+                    <i class="icon-play-circled2" @click="play(movieData)"></i>
                     <img class="backdrop-image" :src="movieData.backdrop_path||'images/g7_l.gif'" alt="">
                     <span style="position:absolute;left:20px;bottom:5px;">{{movieData.runtime}}</span>
                   </div>

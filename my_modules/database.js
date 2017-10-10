@@ -12,4 +12,7 @@ module.exports = class DB {
     get db() {
         return this.data
     }
+    deleteById(id, cb) {
+        this.data.remove({ _id: 'id2' }, {}, cb);
+    }
 }

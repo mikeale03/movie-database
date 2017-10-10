@@ -126,7 +126,7 @@ span,p,ul {
 }
 
 .header input[type="text"] {
-    width: 70%;
+    width: 60%;
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
     padding: 8px;
@@ -267,8 +267,9 @@ span,p,ul {
     height: 100%;
 }
 
-.title-container {
-    
+.type-select {
+    padding: 8px;
+    border: 0 none;
 }
 
 .row__poster{

@@ -19,7 +19,8 @@ let app = new Vue({
   data: {
     movies: [],
     movieData:{title:'',cast:[]},
-    input:''
+    input:'',
+    type:'all'
   },
   methods: {
     fetchData: function (movie, index) {
@@ -103,13 +104,15 @@ let app = new Vue({
         if(err) alert(err);
         else {
           vm.movies = docs;
+          console.log(docs);
           vm.movieData = vm.movies[0]||vm.movieData;
         }
       })
     },
 
     debounceFind: require('./my_modules/debounce') ( function() {
-      this.find(this.input);
+      this.find(this.input,this.type);
+      console.log(this.type);
     },500),
 
     displayTitle: (movie) =>  movie.year ? movie.title +" ("+movie.year+")" :movie.title,
@@ -140,17 +143,20 @@ let app = new Vue({
         ipcRenderer.send('showEditMovie',movie, index);
       }}))
       menu.append(new MenuItem({label: 'Delete', click() {
-        vm.movies.splice(index,1);
+        db.remove({_id:movie._id},{}, function(err, numRemoved) {
+          console.log("data removed: "+numRemoved);
+          vm.movies.splice(index,1);
+        });
       }}))
       menu.append(new MenuItem({label: 'Show in directory', click() {
-        shell.showItemInFolder(movie.path);
+        shell.showItemInFolder('file:'+movie.path);
       }}))
       e.preventDefault();
       menu.popup(remote.getCurrentWindow());
     },
     play:(movie) => {
       console.log(movie.path);
-      shell.openItem('file:'+movie.path);
+      shell.openItem('file:'+movie.path) || alert('File error!');
       //ipcRenderer.send('play',movie.path);
     }
   },
@@ -159,7 +165,7 @@ let app = new Vue({
     // `this` points to the vm instance
     let vm = this;
     
-    db.find({}).sort({date_added:-1}).exec(function(err, data) {
+    db.find({}).sort({release_date:-1}).limit(100).exec(function(err, data) {
       if(data[0]) {
         vm.movies = data;
         vm.movieData = data[0];

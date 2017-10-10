@@ -203,17 +203,6 @@ const template = [
       label: 'File',
       submenu: [
           {
-            label: 'Add Library',
-            click: function() {
-              const {dialog} = require('electron')
-              let dir = dialog.showOpenDialog({properties: ['openDirectory']})
-              if(dir) {
-                dir = dir[0].replace(/\\/g,'/')
-                win.webContents.send('addLib', dir)              
-              }
-            }
-          },
-         {
             label: 'Add File',
             click: function() {
               const {dialog} = require('electron')
