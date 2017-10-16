@@ -6,13 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron main.js",
-    "build": "eletron-rebuild"
+    "build": "eletron-rebuild",
+    "package-win": "electron-packager  --platform=win32 --arch=x64 ./ movie-database --overwrite --icon=app.ico --prune=true --out=release-builds --version-string.CompanyName=mikeale --version-string.FileDescription=mikeale --version-string.ProductName=\"Mikeale Apps\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "electron": "^1.6.11",
-    "electron-rebuild": "^1.5.11"
+    "electron-rebuild": "^1.5.11",
+    "electron-packager": "^9.1.0"
   },
   "dependencies": {
     "axios": "^0.16.2",

@@ -5,13 +5,13 @@ const tmdb = require('./my_modules/tmdb');
 const omdb = require('./my_modules/omdb');
 
 //var Datastore = require('nedb');
+let dir = __dirname.replace(/\\/g, "/");
 let database = require('./my_modules/database');
 let db = new database(`${__dirname}/database/myDb`).db;
-/*let db = new Datastore({ filename: `${__dirname}/database/myDb` });
 
-db.loadDatabase(function (err) {    // Callback is optional1
-  if(err) console.log(err.message);
-  else console.log('Connected to database');
+/*fs.writeFile('server.dat', `${dir}/database/myDb`, function (err) {
+  if (err) throw err;
+  console.log('server.dat was made!');
 });*/
 
 let app = new Vue({
