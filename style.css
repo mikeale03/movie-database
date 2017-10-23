@@ -20,6 +20,18 @@ button {
     padding:5px;
 }
 
+footer {
+    position: absolute;
+    height: 30px;
+    width: 100%;
+    background: #38393A;
+    bottom: 0px;
+    left: 0px;
+    color: white;
+    text-align: center;
+    padding-top: 10px;
+}
+
 img {
     max-width: 100%;
     max-height: 100%;
@@ -44,6 +56,8 @@ input[type='text']:focus {
 span,p,ul {
     font-size: 0.85em;
 }
+
+
 .clearfix:after {
   content: "";
   display: table;
@@ -55,6 +69,8 @@ span,p,ul {
     display: flex;
     flex-direction: column;
     width: 100%;
+    padding-bottom: 30px;
+    visibility: hidden;
 }
 
 .card {
@@ -139,6 +155,8 @@ span,p,ul {
     border-bottom-right-radius: 5px;
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;
+    box-sizing: border-box;
+    height: 34px;
 }
 
 .header__bot {
@@ -342,6 +360,11 @@ span,p,ul {
     color:white;
 }
 
+.movie-list__item--focus {
+    background-color:#444347;
+    color:white;
+}
+
 .menu {
     position: fixed;
     right: 10px;
@@ -361,6 +384,10 @@ span,p,ul {
 .padding {
     height: 10px;
     background: #38393A;
+}
+
+.padding-bot {
+    height: 40px;
 }
 
 
@@ -386,4 +413,16 @@ span,p,ul {
 }
 ::-webkit-scrollbar-thumb:window-inactive {
 	background: rgb(189, 191, 193,0.3); 
+}
+
+.show {
+    visibility:visible;
+}
+
+.loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -2;
+    margin: 10px 20px;
 }

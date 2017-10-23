@@ -10,13 +10,13 @@
 </head>
 <body>
     
-    <div class="container" id="app" style="overflow:scroll">
+    <div class="container show" id="app" style="overflow:scroll">
         <div class="menu">
             <button class="menu__button" @click='save(movieData)'>Save</button><br>
             <button class="menu__button" @click='fetchData(movieData)'>Fetch Data</button>
         </div>
         <div class="input-container">
-            <label for="imdb">Imdb id:</label><input type="text" id="imdb" class="edit-input" placeholder="Enter imdb id" v-model="movieData.imdb_id">
+            <label for="imdb">Imdb id:</label><input type="text" id="imdb" class="edit-input" placeholder="Enter imdb id" v-model="imdb_id">
         </div>
 
         <div class="input-container">
@@ -110,6 +110,7 @@
             el: '#app',
             data: {
                 movieData:movieData,
+                imdb_id:""
             },
             methods: {
                 getMovieGenres: (movie) => movie.genres ? movie.genres.join(', '):'',
@@ -120,54 +121,89 @@
                 return value.name;
                 }).join(', '):'',
                 getLanguages: (movie) => movie.languages ? movie.languages.join(', '):'',
-                save: (movie) => {
+                save: function(movie) {
                     console.log(movie);
                     movie.isFetch = true;
                     ipcRenderer.send('saveEdit', movie, index);
+                    this.imdb_id = "";
+
                 },
                 getYear: (movie) => movie.release_date ? movie.release_date.slice(0,4):'',
                 fetchData: function (movie) {
                     let vm = this;
-                    tmdb.searchMovie(movie)
-                    .then(function (response) {
-                        if(response.data.results.length) {
-                            let data = response.data.results[0];
-                            data.isFetch = true;
-                            data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
-                            data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
-                            data.year = parseInt(data.release_date.slice(0,4));
+                    if(this.imdb_id) {
+                        tmdb.findImdbId(this.imdb_id)
+                        .then(function(response) {
+                            console.log(response);
+                            if(response.data.movie_results[0]) {
+                                let data = response.data.movie_results[0];
+                                addInitialData(data);
+                                vm.movieData = Object.assign({},vm.movieData, data);
+                                downloadImage(vm.movieData);
+                                return tmdb.getMovieDetails(data.id);
+                            } else {
+                                alert("no match found!");
+                            }
+                        })
+                        .then(function(response) {
+                            vm.movieData = Object.assign({},vm.movieData, getMoreData(response.data));
+                            return omdb.searchMovieId(response.data.imdb_id);
+                        })
+                        .then((response) => {
+                            if(response) {
+                                let data = {imdbRating:response.data.imdbRating}
+                                vm.movieData = Object.assign({},vm.movieData,data);
+                            }
+                        }) 
+                        .catch(function (error) {
+                            alert(`Api Error: ${error.message}`);
+                        });
+
+                    } else {
+
+                        tmdb.searchMovie(movie)
+                        .then(function (response) {
+                            if(response.data.results.length) {
+                                let data = response.data.results[0];
+                                data.isFetch = true;
+                                data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
+                                data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
+                                data.year = parseInt(data.release_date.slice(0,4));
+                                vm.movieData = Object.assign({},vm.movieData, data);
+                                downloadImage(vm.movieData);
+                                return tmdb.getMovieDetails(data.id);
+                            } else {
+                                alert("no match found!");
+                            }
+                        })
+                        .then(function(response) {
+                            response = response.data;
+                            let data = {
+                                genres:response.genres.map( value => value.name ),
+                                imdb_id:response.imdb_id,
+                                languages: response.spoken_languages.map( value => value.name ),
+                                runtime : require('./my_modules/time').minToHourFormat(response.runtime),
+                                cast:getCast(response.credits.cast,15).map(function(val) {
+                                    val.profile_path = val.profile_path ? tmdb.imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
+                                    return val;
+                                }),
+                                directors:getDirectors(response.credits.crew)
+                            }
                             vm.movieData = Object.assign({},vm.movieData, data);
-                            return tmdb.getMovieDetails(data.id);
-                        } else {
-                            alert("no match found!");
-                        }
-                    })
-                    .then(function(response) {
-                        response = response.data;
-                        let data = {
-                          genres:response.genres.map( value => value.name ),
-                          imdb_id:response.imdb_id,
-                          languages: response.spoken_languages.map( value => value.name ),
-                          runtime : require('./my_modules/time').minToHourFormat(response.runtime),
-                          cast:getCast(response.credits.cast,15).map(function(val) {
-                            val.profile_path = val.profile_path ? tmdb.imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
-                            return val;
-                          }),
-                          directors:getDirectors(response.credits.crew)
-                        }
-                        vm.movieData = Object.assign({},vm.movieData, data);
-                        console.log(vm.movieData);
-                        return omdb.searchMovieId(data.imdb_id);
-                    })
-                    .then((response) => {
-                        if(response) {
-                            let data = {imdbRating:response.data.imdbRating}
-                            vm.movieData = Object.assign({},vm.movieData,data);
-                        }
-                    }) 
-                    .catch(function (error) {
-                        alert(`Api Error: ${error.message}`);
-                    });
+                            console.log(vm.movieData);
+                            return omdb.searchMovieId(data.imdb_id);
+                        })
+                        .then((response) => {
+                            if(response) {
+                                let data = {imdbRating:response.data.imdbRating}
+                                vm.movieData = Object.assign({},vm.movieData,data);
+                            }
+                        }) 
+                        //.catch(function (error) {
+                        //    alert(`Api Error: ${error.message}`);
+                        //});
+                    }
+                    
                 },
                 updateGenres(event) {
                     console.log(event);
@@ -215,12 +251,64 @@
 
         ipcRenderer.on('movieData', function(event, movie, ind) {
             app.movieData = movie;
+            app.imdb_id = "";
             app.movieData.poster_path = app.movieData.poster_path ? app.movieData.poster_path : "";
             app.movieData.backdrop_path = app.movieData.backdrop_path ? app.movieData.backdrop_path : "";
             app.updateView();
             console.log(app.movieData);
             index = ind;
         })
+        function addInitialData(data) {
+            data.isFetch = true;
+            data.poster_path = tmdb.imageApiUrl+'w500'+data.poster_path;
+            data.backdrop_path = tmdb.imageApiUrl+'w500'+data.backdrop_path;
+            data.year = parseInt(data.release_date.slice(0,4));
+        }
+        function getMoreData(response) {
+            return {
+                genres:response.genres.map( value => value.name ),
+                imdb_id:response.imdb_id,
+                languages: response.spoken_languages.map( value => value.name ),
+                runtime : require('./my_modules/time').minToHourFormat(response.runtime),
+                cast:getCast(response.credits.cast,15).map(function(val) {
+                    val.profile_path = val.profile_path ? tmdb.imageApiUrl+'w92'+val.profile_path:'images/noImage.png';
+                    return val;
+                }),
+                directors:getDirectors(response.credits.crew)
+            }
+        }
+        function downloadImage(movie) {
+            const download = require('image-downloader')
+            //const download2 = require('image-downloader')
+
+            let ind = movie.path.lastIndexOf('/');
+            let moviePath = movie.path.slice(0,ind);
+            
+            let image1 = {
+              url: movie.poster_path, 
+              dest: moviePath+'/'+movie.title+movie.id+'-poster.jpg'        
+            }
+
+            let image2 = {
+              url:  movie.backdrop_path, 
+              dest: moviePath+'/'+movie.title+movie.id+'-backdrop.jpg'       
+            }
+            
+            download.image(image1)
+              .then(({ filename, image }) => {
+                app.movieData.poster_path = filename;
+                console.log('File saved to', filename)
+                return download.image(image2)
+              })
+              .then(({ filename, image }) => {
+                app.movieData.backdrop_path = filename;
+                    //movie = Object.assign({},movie,doc); 
+                console.log('File saved to', filename)
+              })
+              .catch((err) => {
+                throw err
+            })
+        }
     </script>
 </body>
 </html>

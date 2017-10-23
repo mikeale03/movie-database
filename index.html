@@ -2,13 +2,13 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>G7 movies</title>
+    <title>G-7 movies</title>
     <link rel="stylesheet" href="fontello/css/fontello.css">
     <link rel="stylesheet" href="style.css">
     <script src="vue.js"></script>
   </head>
   <body>
-    <div class="container" id="app">
+    <div class="container" id="app" v-bind:class="{'show':show}">
       <div class="padding"></div>
       <header class="header">
         <div class="header__top table">
@@ -26,7 +26,7 @@
           </div>
         </div>
         <div class="header__bot">
-          <span class="blue-hover" @click="find(0,'recent-added',0,100)">
+          <span class="blue-hover" @click="find(0,'recent-added')">
             Recently Added
           </span>|
           <span class="blue-hover" @click="find(0,'top-rated')">
@@ -130,7 +130,7 @@
         <aside class="row__col-small">
           <div class="list-container">
             <ul class="movie-list">
-              <li class="movie-list__item" v-for="(movie, index) in movies" 
+              <li class="movie-list__item" v-for="(movie, index) in movies" v-bind:class="{'movie-list__item--focus':index == movieIndex}"
               @click="fetchData(movie, index)" @contextmenu="showContextMenu(movie,index,$event)" >
                 <i class="icon-play-circled" @click="play(movie)"></i>{{displayTitle(movie)}}
               </li>
@@ -138,6 +138,13 @@
           </div>
         </aside>
       </div>
+      <div class="padding-bot"></div>
+    </div>
+    <footer>
+      ©2017 G-7 movies
+    </footer>
+    <div class="loading">
+        <h3>Loading ...</h3>
     </div>
     <script src="app.js"></script>
   </body>

@@ -19,6 +19,7 @@
   "dependencies": {
     "axios": "^0.16.2",
     "chokidar": "^1.7.0",
+    "image-downloader": "^3.3.0",
     "nedb": "^1.8.0"
   }
 }

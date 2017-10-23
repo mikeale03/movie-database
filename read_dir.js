@@ -25,7 +25,8 @@ module.exports = function readDir(dir,ext, cb) {
                     } else {
                         let ind = v.lastIndexOf('.');
                         if(ind > 0) {
-                            let ex = v.slice(ind,v.length);
+                            let ex = v.slice(ind,v.length).toLowerCase();
+
                             v = v.slice(0,ind);
                             if(ext.indexOf(ex)>0) {
                                 cb(null,dir+'/'+v+ex,v,ex);

@@ -6,15 +6,17 @@ module.exports = {
     imageApiUrl : 'http://image.tmdb.org/t/p/',
     searchMovie(movie) {
         let query = `${this.baseApiUrl}search/movie?api_key=${this.apiKey}&language=en-US&query=${movie.title}&page=1&include_adult=false`
-        query += movie.release_date ? `&year=${movie.release_date.slice(0,4)}`:''
+        query += movie.year ? `&year=${movie.year}`:''
         return axios.get(query)
     },
     getMovieDetails(id) {
-        let query = `${this.baseApiUrl}movie/${id}}?api_key=${this.apiKey}&language=en-US&append_to_response=credits`
+        let query = `${this.baseApiUrl}movie/${id}?api_key=${this.apiKey}&language=en-US&append_to_response=credits`
+        console.log(query);
         return axios.get(query)
     },
     findImdbId(id) {
-      let query = `${this.baseApiUrl}find/${id}}?api_key=${this.apiKey}&language=en-US&external_source=imdb_id`
+      let query = `${this.baseApiUrl}find/${id}?api_key=${this.apiKey}&language=en-US&external_source=imdb_id`
+      console.log(query);
       return axios.get(query)
     }
 }
