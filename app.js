@@ -342,7 +342,7 @@ ipcRenderer.on('readFiles', (event, files) => {
       if(ind > 0) {
           let ex = filename.slice(ind,filename.length);
           filename = filename.slice(0,ind);
-          if(ext.indexOf(ex)>0) {
+          if(ext.indexOf(ex)>(-1)) {
             let id = path.replace(/ /g,"_");
             db.find({_id:id}, function(err, docs) {
               if(err) {
